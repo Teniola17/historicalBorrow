@@ -1,0 +1,32 @@
+Package: historicalBorrow
+Title: Bayesian Borrowing of Historical Data in Clinical Trials
+Version: 0.1.0
+Authors@R: person("Emmanuel", "Adewuyi", email = "teniolavof@gmail.com",
+    role = c("aut", "cre"))
+Description: Implements Meta-Analytic-Predictive (MAP), robust MAP, power,
+    and commensurate priors for incorporating historical data into Bayesian
+    clinical trial analyses. Users supply data and choose a model; Stan code
+    is generated, compiled, and run automatically via 'cmdstanr'.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Imports:
+    cmdstanr (>= 0.7.0),
+    posterior (>= 1.5.0),
+    ggplot2 (>= 3.4.0),
+    mclust (>= 6.0),
+    glue (>= 1.7.0),
+    checkmate (>= 2.3.0),
+    rlang (>= 1.1.0),
+    dplyr (>= 1.1.0),
+    tidyr (>= 1.3.0)
+Suggests:
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown,
+    usethis,
+    withr
+VignetteBuilder: knitr
+Config/testthat/edition: 3
+Additional_repositories: https://mc-stan.org/r-packages/

@@ -1,0 +1,34 @@
+# R package build artifacts
+*.Rcheck/
+*.tar.gz
+*.zip
+
+# roxygen2 — man/*.Rd are regenerated; NAMESPACE is committed
+man/*.Rd
+
+# Generated data
+/data/*.rda
+/data/*.rds
+
+# Stan compiled objects
+/inst/stan/*.exe
+/inst/stan/*.hpp
+*.o
+*.so
+*.dll
+
+# RStudio files
+.Rproj.user
+*.Rproj
+.Rhistory
+.RData
+
+# CmdStan cache
+~/.cache/historicalBorrow/
+
+# devtools build artifacts
+inst/doc/
+
+# OS
+.DS_Store
+Thumbs.db

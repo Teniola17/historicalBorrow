@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "pkgdown docs site",
+      "runtimeExecutable": "C:\\Program Files\\R\\R-4.6.0\\bin\\Rscript.exe",
+      "runtimeArgs": ["-e", "pkgdown::serve_site(preview = FALSE)"],
+      "port": 4321,
+      "description": "Live-reloading package documentation site. Requires: install.packages('pkgdown')"
+    }
+  ]
+}
