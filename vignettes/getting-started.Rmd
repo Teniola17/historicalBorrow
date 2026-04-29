@@ -1,0 +1,249 @@
+---
+title: "Getting Started with historicalBorrow"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started with historicalBorrow}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment  = "#>",
+  eval     = FALSE   # set TRUE when CmdStan is available in the build environment
+)
+```
+
+## Overview
+
+The **historicalBorrow** package provides a simple, high-level interface for
+incorporating historical clinical trial data into Bayesian analyses. Under the
+hood, Stan models are generated, compiled, and run automatically — no Stan
+coding is required.
+
+The four-step workflow is:
+
+| Step | Function | Purpose |
+|---|---|---|
+| 1 | `prepare_data()` | Validate and structure data |
+| 2 | `fit_map()` | Estimate MAP prior from historical studies |
+| 3 | `robustify_map()` | Mix MAP with vague prior (RMAP) |
+| 4 | `fit_borrowing_model()` | Analyse current trial with borrowing |
+
+## Installation
+
+```{r install, eval=FALSE}
+# Install the Stan backend first
+install.packages("cmdstanr",
+  repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
+cmdstanr::install_cmdstan()
+
+# Install historicalBorrow
+# devtools::install_github("Teniola17/historicalBorrow")
+```
+
+```{r load}
+library(historicalBorrow)
+```
+
+---
+
+## Binary Outcome Example
+
+### 1 — Prepare data
+
+`example_trial_data` ships with the package and contains simulated binary,
+continuous, and count trial data (6 historical studies + 1 current trial each).
+
+```{r binary-prep}
+pd <- prepare_data(
+  hist_data    = example_trial_data$binary$hist,
+  current_data = example_trial_data$binary$current,
+  outcome      = "binary"
+)
+print(pd)
+```
+
+### 2 — Fit MAP prior
+
+The MAP prior is estimated from the historical studies using a Bayesian
+hierarchical binomial-logit model. The posterior predictive distribution for a
+new exchangeable study (`mu_pred`) is approximated as a K-component mixture of
+normals (K chosen by BIC).
+
+```{r binary-map}
+set.seed(2024)
+mp <- fit_map(
+  data          = pd,
+  chains        = 4L,
+  iter_warmup   = 1000L,
+  iter_sampling = 2000L
+)
+print(mp)
+plot(mp)   # histogram of mu_pred draws + mixture PDF overlay
+```
+
+The `ess_prior` field reports the approximate equivalent historical sample size:
+how many current-trial patients the MAP prior is worth.
+
+### 3 — Robustify
+
+Add a vague component (weight 20%) to protect against prior-data conflict.
+
+```{r binary-rmap}
+rmp <- robustify_map(mp, weight = 0.8)
+print(rmp)
+plot(rmp)  # MAP vs vague vs total RMAP density
+```
+
+### 4 — Fit borrowing model
+
+```{r binary-fit}
+bf <- fit_borrowing_model(
+  current_data = pd,
+  prior        = rmp,
+  model        = "rmap"
+)
+print(bf)
+summary(bf)
+```
+
+### Diagnostics
+
+```{r binary-diag}
+diag <- diagnostics(bf)
+print(diag)
+diag$trace_plots   # ggplot trace plots for main parameters
+```
+
+Warnings are surfaced automatically when R-hat > 1.05, divergences are
+detected, or prior-data conflict is flagged.
+
+### Visualisations
+
+```{r binary-plots}
+# Prior and posterior density overlay
+plot_prior_posterior(bf)
+
+# Credible interval comparison (with vs. without borrowing)
+plot_borrowing_effect(bf)
+
+# Shrinkage of posterior towards the MAP prior
+plot_shrinkage(bf)
+
+# Via the unified plot() dispatch
+plot(bf, type = "prior_posterior")
+plot(bf, type = "effect")
+plot(bf, type = "shrinkage")
+plot(bf, type = "trace")
+```
+
+### Go/No-Go decision
+
+```{r binary-decision}
+dc <- decision_criteria(
+  fit                   = bf,
+  theta_threshold       = 0.25,   # minimum clinically meaningful response rate
+  direction             = "greater",
+  probability_threshold = 0.80
+)
+print(dc)
+```
+
+---
+
+## Continuous Outcome Example
+
+```{r continuous}
+pd_c  <- prepare_data(
+  example_trial_data$continuous$hist,
+  example_trial_data$continuous$current,
+  outcome = "continuous"
+)
+mp_c  <- fit_map(pd_c, seed = 1)
+rmp_c <- robustify_map(mp_c, weight = 0.8)
+bf_c  <- fit_borrowing_model(pd_c, prior = rmp_c, model = "rmap")
+summary(bf_c)
+plot_prior_posterior(bf_c)
+```
+
+---
+
+## Count Outcome Example
+
+```{r count}
+pd_n  <- prepare_data(
+  example_trial_data$count$hist,
+  example_trial_data$count$current,
+  outcome = "count"
+)
+mp_n  <- fit_map(pd_n, seed = 1)
+bf_n  <- fit_borrowing_model(pd_n, prior = mp_n, model = "map")
+summary(bf_n)
+diagnostics(bf_n)
+```
+
+---
+
+## Advanced: Power Prior
+
+The power prior scales the historical log-likelihood by a factor `a0 ∈ [0, 1]`.
+Setting `a0_fixed = -1` estimates `a0` from the data (modified power prior).
+
+```{r power}
+bf_power <- fit_borrowing_model(
+  current_data = pd,
+  prior        = NULL,
+  model        = "power",
+  hyperpriors  = list(
+    a0_fixed = -1,     # estimate a0
+    a0_alpha = 1,      # Beta(1,1) hyperprior on a0
+    a0_beta  = 1
+  )
+)
+summary(bf_power)
+# The a0 posterior tells you how much the data supports borrowing:
+# a0 near 1 => current and historical data are consistent
+# a0 near 0 => conflict detected, borrowing suppressed
+```
+
+---
+
+## Advanced: Commensurate Prior
+
+The commensurate prior links the current and historical treatment parameters
+via a precision parameter `tau_comm`. A heavy-tailed Cauchy(0, 1) hyperprior
+on `tau_comm` allows the data to choose the borrowing strength automatically.
+
+```{r commensurate}
+bf_comm <- fit_borrowing_model(
+  current_data = pd,
+  prior        = NULL,
+  model        = "commensurate"
+)
+summary(bf_comm)
+# Small tau_comm posterior => strong borrowing (data are commensurate)
+# Large tau_comm posterior => weak borrowing (prior-data conflict)
+```
+
+---
+
+## Object Classes
+
+| Class | Created by | Key slots |
+|---|---|---|
+| `bb_data` | `prepare_data()` | `outcome`, `hist_data`, `stan_data_map`, `stan_data_current` |
+| `map_prior` | `fit_map()` | `mixture`, `mu_pred_draws`, `ess_prior`, `draws` |
+| `rmap_prior` | `robustify_map()` | inherits `map_prior` + `mixture_rmap`, `ess_prior_rmap` |
+| `borrowing_fit` | `fit_borrowing_model()` | `draws`, `prior`, `model`, `stan_code` |
+| `hb_diagnostics` | `diagnostics()` | `rhat`, `divergences`, `prior_data_conflict`, `trace_plots` |
+| `decision_result` | `decision_criteria()` | `go`, `probability`, `posterior_ci` |
+
+---
+
+## Session Info
+
+```{r session}
+sessionInfo()
+```

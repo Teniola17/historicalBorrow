@@ -6,9 +6,8 @@
 # roxygen2 — man/*.Rd are regenerated; NAMESPACE is committed
 man/*.Rd
 
-# Generated data
-/data/*.rda
-/data/*.rds
+# User-generated / large data (package example data IS committed)
+# /data/*.rda
 
 # Stan compiled objects
 /inst/stan/*.exe

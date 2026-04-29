@@ -30,3 +30,6 @@ Suggests:
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 Additional_repositories: https://mc-stan.org/r-packages/
+Depends: 
+    R (>= 3.5)
+LazyData: true
