@@ -1,0 +1,219 @@
+---
+title: "Time-Dependent Priors (TDP)"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Time-Dependent Priors}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment  = "#>",
+  eval     = FALSE
+)
+```
+
+## Overview
+
+The **Time-Dependent Prior** (TDP) extends historical borrowing to account for
+temporal trends and drift in treatment effects. It uses an Ornstein-Uhlenbeck
+continuous-time process to model how the treatment parameter evolves over time,
+with automatic down-weighting of older studies via a correlation decay parameter.
+
+### Key Differences from MAP
+
+| Feature | MAP | TDP |
+|---|---|---|
+| Historical studies | Treated as exchangeable | Ordered by time |
+| Borrowing weight | Uniform across studies | Decays with time gap |
+| Control of borrowing | Fixed prior weight | Automatic via OU process + `rho` |
+| When to use | Studies from similar era | Studies across decades/years |
+
+---
+
+## Quick Start
+
+### Step 1: Prepare data with times
+
+```{r tdp-prep}
+# Add a 'time' column to historical data (study year, trial date, etc.)
+hist_with_times <- example_trial_data$binary$hist
+hist_with_times$time <- c(2010, 2012, 2014, 2015, 2016, 2017)
+
+pd <- prepare_data(
+  hist_data    = hist_with_times,
+  current_data = example_trial_data$binary$current,
+  outcome      = "binary"
+)
+```
+
+Alternatively, pass times separately:
+
+```{r tdp-prep-alt}
+pd <- prepare_data(
+  hist_data    = example_trial_data$binary$hist,
+  current_data = example_trial_data$binary$current,
+  outcome      = "binary"
+)
+# Times will be passed to fit_tdp() below
+```
+
+### Step 2: Fit the time-dependent prior
+
+```{r tdp-fit}
+set.seed(2024)
+tdp <- fit_tdp(
+  data         = pd,
+  hist_times   = c(2010, 2012, 2014, 2015, 2016, 2017),
+  current_time = 2024,
+  chains       = 4L
+)
+print(tdp)
+plot(tdp)
+```
+
+The posterior of `rho` controls the decay:
+- **`rho` near 1**: Slow decay, older studies retain influence
+- **`rho` near 0**: Fast decay, only recent studies matter
+- **Automatic**: Data-driven via Beta(2,2) hyperprior on `rho`
+
+### Step 3: Robustify (optional)
+
+```{r tdp-robust}
+rtdp <- robustify_tdp(tdp, weight = 0.8)
+print(rtdp)
+plot(rtdp)
+```
+
+### Step 4: Use in borrowing model
+
+```{r tdp-borrowing}
+bf_tdp <- fit_borrowing_model(
+  current_data = pd,
+  prior        = rtdp,
+  model        = "rtdp"
+)
+summary(bf_tdp)
+plot_prior_posterior(bf_tdp)
+```
+
+---
+
+## Understanding the Time-Dependent Prior Model
+
+The TDP uses an **Ornstein-Uhlenbeck process** parameterised as:
+
+$$\theta_h | \theta_{h-1} \sim N(\mu + \rho^{\Delta t_h}(\theta_{h-1} - \mu), \sigma^2 \frac{1-\rho^{2\Delta t_h}}{1-\rho^2})$$
+
+where:
+- **$\theta_h$** = treatment effect (logit scale for binary, natural scale for continuous, log-rate for count)
+- **$\mu$** = long-term mean effect
+- **$\rho$** = correlation decay per unit time (Beta(2,2) prior)
+- **$\sigma$** = temporal noise SD
+- **$\Delta t_h$** = time gap between studies $h-1$ and $h$
+
+### Parameters Estimated
+
+| Parameter | Role | Prior |
+|---|---|---|
+| `mu` | Long-term mean | N(0, 2.5) [binary/count]; N(0, 100) [continuous] |
+| `mu1` | Initial effect (first study) | N(mu, 2.5) [binary]; N(mu, 50) [continuous] |
+| `sigma1` | Initial SD | N(0, 1) [binary]; N(0, 10) [continuous] |
+| `tau` | Temporal noise | N(0, 0.5) [binary]; N(0, 10) [continuous] |
+| `rho` | Decay per unit time | Beta(2, 2) [symmetric, moderate] |
+| `theta[h]` | Each study's effect | From OU evolution |
+
+### Prediction (Generated Quantity)
+
+At current time $t^*$:
+
+$$\theta^* \sim N(\mu + \rho^{\Delta t^*}(\theta_H - \mu), \sigma^2 \frac{1-\rho^{2\Delta t^*}}{1-\rho^2})$$
+
+where $\Delta t^* = t^* - t_H$ (time since the latest historical study).
+
+---
+
+## Example: Drift in Efficacy
+
+Suppose treatment efficacy has improved over time (due to better patient selection,
+dosing refinement, etc.). The TDP automatically down-weights the old, less
+effective historical studies:
+
+```{r tdp-drift}
+# Historical studies span 2005 to 2020 with improving efficacy
+# Current trial in 2024 — wants more recent evidence
+
+# Using TDP with rho ~ Beta(2,2):
+#   - Studies from 2020: full influence
+#   - Studies from 2015: ~70% influence (5-year decay)
+#   - Studies from 2005: ~10% influence (19-year decay)
+
+# Using MAP (ignoring time):
+#   - All studies treated equally, regardless of age
+#   - May underestimate current efficacy if trend is positive
+
+tdp_modern <- fit_tdp(pd, hist_times = c(2005, 2010, 2013, 2015, 2018, 2020),
+                      current_time = 2024)
+print(tdp_modern)
+# The rho posterior will be pulled toward higher values (slower decay)
+# if the trend is detected in the data
+```
+
+---
+
+## Advantages & Limitations
+
+### Advantages
+
+✓ **Automatic down-weighting** of older data based on time and correlation decay
+✓ **Data-driven borrowing** — the extent of borrowing is learned from the data
+✓ **Realistic for long-term trials** — accounts for drift in treatment effects
+✓ **Interpretable** — `rho` posterior tells you about temporal trends
+
+### Limitations
+
+✗ **Requires time information** — all historical studies must have a date/time
+✗ **Assumes continuous process** — may not suit discrete "eras" of treatment
+✗ **Computational cost** — slightly more parameters than MAP (one `rho` per model)
+✗ **Sensitive to time spacing** — uneven gaps between studies can affect OU evolution
+
+---
+
+## Robustifying the TDP
+
+Just as MAP can be robustified, so can TDP:
+
+```{r tdp-mix}
+# Pure TDP: 100% weight on temporal evolution
+bf_tdp_pure <- fit_borrowing_model(pd, prior = tdp, model = "tdp")
+
+# Robust TDP: 80% TDP + 20% vague prior
+# Protects against prior-data conflict (e.g., if the current trial
+# has a dramatically different effect than the trend predicts)
+rtdp <- robustify_tdp(tdp, weight = 0.8)
+bf_tdp_robust <- fit_borrowing_model(pd, prior = rtdp, model = "rtdp")
+
+# Compare
+summary(bf_tdp_pure)
+summary(bf_tdp_robust)
+```
+
+The vague component has the same tuning as for MAP:
+
+```{r tdp-vague}
+rtdp_wide <- robustify_tdp(
+  tdp,
+  weight      = 0.7,  # Only 70% TDP
+  vague_prior = list(mean = 0, sd = 20)  # Very wide vague prior
+)
+```
+
+---
+
+## Session Info
+
+```{r}
+sessionInfo()
+```

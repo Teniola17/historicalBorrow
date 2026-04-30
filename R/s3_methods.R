@@ -170,6 +170,153 @@ plot.rmap_prior <- function(x, ...) {
     ggplot2::theme(legend.position = "top")
 }
 
+# ── tdp_prior ─────────────────────────────────────────────────────────────────
+
+#' @export
+print.tdp_prior <- function(x, ...) {
+  cat("── historicalBorrow: Time-Dependent Prior ────────────────────────────────\n")
+  cat(glue::glue("  Outcome type    : {x$outcome_type}\n"))
+  cat(glue::glue("  Studies used    : {x$data$n_hist}\n"))
+  cat(glue::glue("  Prediction time : {x$current_time}\n"))
+  cat(glue::glue("  Mixture K       : {x$mixture$K} component(s)\n"))
+  cat(glue::glue("  ESS (prior)     : ~{x$ess_prior} patients\n\n"))
+
+  mix_tbl <- data.frame(
+    Component = seq_len(x$mixture$K),
+    Weight    = round(x$mixture$weights, 4),
+    Mean      = round(x$mixture$means,   4),
+    SD        = round(x$mixture$sds,     4)
+  )
+  cat("  Mixture components (TDP predictive posterior):\n")
+  print(mix_tbl, row.names = FALSE)
+  invisible(x)
+}
+
+#' @export
+plot.tdp_prior <- function(x, ...) {
+  mix      <- x$mixture
+  draws    <- x$theta_star_draws
+
+  x_range  <- range(draws, na.rm = TRUE)
+  padding  <- diff(x_range) * 0.4
+  x_grid   <- seq(x_range[1] - padding, x_range[2] + padding, length.out = 500L)
+  mix_dens <- .eval_mixture_density(x_grid, mix)
+  mix_df   <- data.frame(x = x_grid, density = mix_dens)
+
+  ggplot2::ggplot() +
+    ggplot2::geom_histogram(
+      data    = data.frame(draws = draws),
+      mapping = ggplot2::aes(x = .data$draws, y = ggplot2::after_stat(density)),
+      bins    = 50, fill = "steelblue", alpha = 0.4, colour = "white"
+    ) +
+    ggplot2::geom_line(
+      data    = mix_df,
+      mapping = ggplot2::aes(x = .data$x, y = .data$density),
+      colour  = "#E66101",
+      linewidth = 1.0
+    ) +
+    ggplot2::labs(
+      title    = "Time-Dependent Prior",
+      subtitle = glue::glue(
+        "Outcome: {x$outcome_type} | K = {mix$K} | ",
+        "T_current = {x$current_time} | ESS ≈ {x$ess_prior}"
+      ),
+      x = glue::glue("theta_star ({x$outcome_type} link scale)"),
+      y = "Density"
+    ) +
+    ggplot2::theme_bw()
+}
+
+# ── rtdp_prior ────────────────────────────────────────────────────────────────
+
+#' @export
+print.rtdp_prior <- function(x, ...) {
+  cat("── historicalBorrow: Robust Time-Dependent Prior ─────────────────────────\n")
+  cat(glue::glue("  Outcome type    : {x$outcome_type}\n"))
+  cat(glue::glue("  Prediction time : {x$current_time}\n"))
+  cat(glue::glue("  TDP weight      : {x$rtdp_weight}\n"))
+  cat(glue::glue("  Vague weight    : {round(1 - x$rtdp_weight, 4)}\n"))
+  cat(glue::glue("  TDP ESS         : ~{x$ess_prior} patients\n"))
+  cat(glue::glue("  RTDP ESS        : ~{x$ess_prior_rtdp} patients\n\n"))
+
+  mix <- x$mixture_rtdp
+  n   <- mix$K
+  labels <- c(
+    paste0("TDP-", seq_len(n - 1)),
+    "Vague"
+  )
+  mix_tbl <- data.frame(
+    Component = labels,
+    Weight    = round(mix$weights, 4),
+    Mean      = round(mix$means,   4),
+    SD        = round(mix$sds,     4)
+  )
+  cat("  Extended mixture (RTDP):\n")
+  print(mix_tbl, row.names = FALSE)
+  invisible(x)
+}
+
+#' @export
+plot.rtdp_prior <- function(x, ...) {
+  mix  <- x$mixture_rtdp
+  K    <- mix$K
+  n_g  <- 500L
+
+  x_range <- c(
+    min(mix$means - 3 * mix$sds),
+    max(mix$means + 3 * mix$sds)
+  )
+  x_grid  <- seq(x_range[1], x_range[2], length.out = n_g)
+
+  # Full RTDP density
+  rtdp_dens <- .eval_mixture_density(x_grid, mix)
+
+  # TDP-only density (first K-1 components, re-normalised)
+  tdp_mix <- list(
+    weights = mix$weights[-K] / sum(mix$weights[-K]),
+    means   = mix$means[-K],
+    sds     = mix$sds[-K],
+    K       = K - 1L
+  )
+  tdp_dens  <- .eval_mixture_density(x_grid, tdp_mix) * sum(mix$weights[-K])
+
+  vague_dens <- mix$weights[K] *
+    dnorm(x_grid, mix$means[K], mix$sds[K])
+
+  plot_df <- rbind(
+    data.frame(x = x_grid, density = rtdp_dens, source = "RTDP (total)"),
+    data.frame(x = x_grid, density = tdp_dens,  source = "TDP component"),
+    data.frame(x = x_grid, density = vague_dens, source = "Vague component")
+  )
+
+  ggplot2::ggplot(
+    plot_df,
+    ggplot2::aes(x = .data$x, y = .data$density,
+                 colour = .data$source, linetype = .data$source)
+  ) +
+    ggplot2::geom_line(linewidth = 0.9) +
+    ggplot2::scale_colour_manual(
+      values = c(
+        "RTDP (total)"    = "black",
+        "TDP component"   = "#E66101",
+        "Vague component" = "steelblue"
+      )
+    ) +
+    ggplot2::labs(
+      title    = "Robust Time-Dependent Prior",
+      subtitle = glue::glue(
+        "TDP weight = {x$rtdp_weight} | RTDP ESS ≈ {x$ess_prior_rtdp} | ",
+        "T_current = {x$current_time}"
+      ),
+      x        = glue::glue("Parameter ({x$outcome_type} link scale)"),
+      y        = "Density",
+      colour   = NULL,
+      linetype = NULL
+    ) +
+    ggplot2::theme_bw() +
+    ggplot2::theme(legend.position = "top")
+}
+
 # ── borrowing_fit ─────────────────────────────────────────────────────────────
 
 #' @export

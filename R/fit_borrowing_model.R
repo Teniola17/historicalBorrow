@@ -12,6 +12,8 @@
 #'   \describe{
 #'     \item{`"map"`}{Uses the MAP mixture prior from `prior$mixture`.}
 #'     \item{`"rmap"`}{Uses the robust MAP mixture from `prior$mixture_rmap`.}
+#'     \item{`"tdp"`}{Uses the TDP mixture prior from `prior$mixture`.}
+#'     \item{`"rtdp"`}{Uses the robust TDP mixture from `prior$mixture_rtdp`.}
 #'     \item{`"power"`}{Power prior — scales historical log-likelihood by `a0`.}
 #'     \item{`"commensurate"`}{Commensurate prior — `tau_comm` controls borrowing.}
 #'   }
@@ -72,6 +74,8 @@ fit_borrowing_model <- function(current_data,
   model_structure <- switch(model,
     map          = "borrowing_map",
     rmap         = "borrowing_rmap",
+    tdp          = "borrowing_tdp",
+    rtdp         = "borrowing_rtdp",
     power        = "borrowing_power",
     commensurate = "borrowing_commensurate"
   )
@@ -126,14 +130,24 @@ fit_borrowing_model <- function(current_data,
 .build_stan_data <- function(current_data, prior, model, hyperpriors) {
   curr <- current_data$stan_data_current
 
-  if (model %in% c("map", "rmap")) {
-    mix <- if (model == "rmap") prior$mixture_rmap else prior$mixture
+  if (model %in% c("map", "rmap", "tdp", "rtdp")) {
+    mix <- if (model == "rmap") {
+      prior$mixture_rmap
+    } else if (model == "rtdp") {
+      prior$mixture_rtdp
+    } else {
+      prior$mixture
+    }
     if (is.null(mix))
       stop(
         if (model == "rmap")
           "prior$mixture_rmap is NULL. Did you call robustify_map()?"
+        else if (model == "rtdp")
+          "prior$mixture_rtdp is NULL. Did you call robustify_tdp()?"
+        else if (model %in% c("tdp", "map"))
+          "prior$mixture is NULL."
         else
-          "prior$mixture is NULL.",
+          "prior object missing mixture.",
         call. = FALSE
       )
     c(
