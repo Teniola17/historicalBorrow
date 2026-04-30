@@ -64,7 +64,7 @@ decision_criteria <- function(fit,
   )
 
   draws_vec <- tryCatch(
-    as.numeric(posterior::subset_draws(fit$draws, variable = param_name)),
+    posterior::extract_variable(fit$draws, variable = param_name),
     error = function(e) {
       stop(glue::glue(
         "Parameter '{param_name}' not found in posterior draws. ",

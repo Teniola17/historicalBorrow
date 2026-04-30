@@ -47,13 +47,13 @@ test_that("prepare_data returns bb_data for count outcome", {
 })
 
 test_that("prepare_data errors when r > n", {
-  hist <- data.frame(study = "S1", n = 10L, r = 15L)
+  hist <- data.frame(study = c("S1", "S2"), n = c(10L, 20L), r = c(15L, 5L))
   curr <- data.frame(study = "C",  n = 50L, r = NA_integer_)
   expect_error(prepare_data(hist, curr, outcome = "binary"), regexp = "r > n")
 })
 
 test_that("prepare_data errors on missing required columns", {
-  hist <- data.frame(study = "S1", n = 100L)  # missing 'r'
+  hist <- data.frame(study = c("S1", "S2"), n = c(100L, 90L))  # missing 'r'
   curr <- data.frame(study = "C",  n = 50L)
   expect_error(
     prepare_data(hist, curr, outcome = "binary"),

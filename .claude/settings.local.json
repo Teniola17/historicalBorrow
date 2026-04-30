@@ -17,7 +17,8 @@
       "Bash(git remote *)",
       "Bash(git branch *)",
       "Bash(git push *)",
-      "PowerShell(& \"C:\\\\Program Files\\\\R\\\\R-4.6.0\\\\bin\\\\Rscript.exe\" --vanilla -e \"cat\\(1+1\\)\" 2>&1; echo \"Exit: $LASTEXITCODE\")"
+      "PowerShell(& \"C:\\\\Program Files\\\\R\\\\R-4.6.0\\\\bin\\\\Rscript.exe\" --vanilla -e \"cat\\(1+1\\)\" 2>&1; echo \"Exit: $LASTEXITCODE\")",
+      "PowerShell(& \"C:\\\\Program Files\\\\R\\\\R-4.6.0\\\\bin\\\\Rscript.exe\" -e \"install.packages\\(c\\('posterior', 'mclust', 'checkmate', 'ggplot2', 'glue', 'rlang', 'dplyr', 'tidyr'\\), repos='https://cloud.r-project.org'\\)\" 2>&1)"
     ]
   }
 }

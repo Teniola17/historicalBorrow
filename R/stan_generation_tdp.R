@@ -32,31 +32,31 @@
 '// Time-Dependent Prior (TDP) — {outcome_type} outcome
 // Ornstein-Uhlenbeck continuous-time process with temporal decay
 
-data \\{
+data {{
 {data_block}
   vector[H] time;
   real<lower=time[H]> t_star;
-\\}
+}}
 
-transformed data \\{
+transformed data {{
   vector[H - 1] delta;
   real<lower=0> delta_star;
-  for (h in 2:H) \\{
+  for (h in 2:H) {{
     delta[h - 1] = time[h] - time[h - 1];
-  \\}
+  }}
   delta_star = t_star - time[H];
-\\}
+}}
 
-parameters \\{
+parameters {{
   vector[H] theta;
   real mu;
   real mu1;
   real<lower=0> sigma1;
   real<lower=0> tau;
   real<lower=0, upper=1> rho;
-\\}
+}}
 
-model \\{
+model {{
   // Hyperpriors
   mu ~ normal({mu_mean}, {mu_sd});
   mu1 ~ normal({mu1_mean}, {mu1_sd});
@@ -68,19 +68,19 @@ model \\{
   theta[1] ~ normal(mu1, sigma1);
 
   // Temporal evolution for h >= 2 via O-U process
-  for (h in 2:H) \\{
+  for (h in 2:H) {{
     real mean_h;
     real var_h;
     mean_h = mu + pow(rho, delta[h - 1]) * (theta[h - 1] - mu);
     var_h  = square(tau) * (1 - pow(rho, 2 * delta[h - 1])) / (1 - square(rho));
     theta[h] ~ normal(mean_h, sqrt(var_h));
-  \\}
+  }}
 
   // Likelihood
 {likelihood}
-\\}
+}}
 
-generated quantities \\{
+generated quantities {{
   // Predictive parameter at current time
   real mean_star;
   real var_star;
@@ -89,7 +89,7 @@ generated quantities \\{
   mean_star  = mu + pow(rho, delta_star) * (theta[H] - mu);
   var_star   = square(tau) * (1 - pow(rho, 2 * delta_star)) / (1 - square(rho));
   theta_star = normal_rng(mean_star, sqrt(var_star));
-\\}
+}}
 '
   )
 }

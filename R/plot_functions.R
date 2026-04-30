@@ -37,7 +37,7 @@ plot_prior_posterior <- function(fit,
     count      = "log_lambda_curr"
   )
   post_link <- tryCatch(
-    as.numeric(posterior::subset_draws(fit$draws, variable = param_link)),
+    posterior::extract_variable(fit$draws, variable = param_link),
     error = function(e) NULL
   )
 
@@ -48,7 +48,7 @@ plot_prior_posterior <- function(fit,
     count      = "lambda_curr"
   )
   post_nat <- tryCatch(
-    as.numeric(posterior::subset_draws(fit$draws, variable = param_nat)),
+    posterior::extract_variable(fit$draws, variable = param_nat),
     error = function(e) post_link
   )
 
@@ -158,7 +158,7 @@ plot_borrowing_effect <- function(fit,
 
   .get_ci <- function(f, label) {
     draws <- tryCatch(
-      as.numeric(posterior::subset_draws(f$draws, variable = param_nat)),
+      posterior::extract_variable(f$draws, variable = param_nat),
       error = function(e) NULL
     )
     if (is.null(draws)) return(NULL)
@@ -207,7 +207,7 @@ plot_borrowing_effect <- function(fit,
     colour = .data$model
   )) +
     ggplot2::geom_point(size = 3) +
-    ggplot2::geom_errorbarh(height = 0.2, linewidth = 0.8, na.rm = TRUE) +
+    ggplot2::geom_errorbar(width = 0.2, linewidth = 0.8, na.rm = TRUE) +
     ggplot2::labs(
       title  = "Borrowing Effect",
       subtitle = glue::glue("{round(ci_width * 100)}% credible intervals"),
@@ -244,7 +244,7 @@ plot_shrinkage <- function(fit) {
   )
 
   post_vals <- tryCatch(
-    as.numeric(posterior::subset_draws(fit$draws, variable = param_nat)),
+    posterior::extract_variable(fit$draws, variable = param_nat),
     error = function(e) NULL
   )
   if (is.null(post_vals)) stop("Cannot extract posterior draws.", call. = FALSE)

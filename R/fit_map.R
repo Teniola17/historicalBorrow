@@ -109,7 +109,7 @@ fit_map <- function(data,
   )
 
   draws    <- posterior::as_draws_df(fit$draws())
-  mu_draws <- as.numeric(posterior::subset_draws(draws, variable = "mu_pred"))
+  mu_draws <- posterior::extract_variable(draws, variable = "mu_pred")
 
   K_max <- mixture_components %||% 6L
   mix   <- .fit_mixture_of_normals(mu_draws, K_max = K_max)

@@ -6,8 +6,8 @@ test_that(".generate_stan_code returns character for all outcome/structure combo
   for (ot in outcomes) {
     for (ms in structures) {
       code <- historicalBorrow:::.generate_stan_code(ot, ms, list())
-      expect_type(code, "character", info = paste(ot, ms))
-      expect_gt(nchar(code), 50L, info = paste(ot, ms))
+      expect_type(code, "character")
+      expect_gt(nchar(code), 50L)
     }
   }
 })
@@ -36,8 +36,7 @@ test_that(".generate_stan_code injects hyperprior values into MAP model", {
     "binary", "map_standard",
     list(mu_mean = 1.5, mu_sd = 5.0, tau_scale = 0.3)
   )
-  expect_match(code, "1.5")
-  expect_match(code, "5\\.0")
+  expect_match(code, "normal\\(1\\.5, 5")
   expect_match(code, "0\\.3")
 })
 

@@ -47,8 +47,12 @@ robustify_map <- function(map_obj,
   if (!inherits(map_obj, "map_prior"))
     stop("`map_obj` must be a `map_prior` object from fit_map().", call. = FALSE)
 
-  checkmate::assert_number(weight, lower = 1e-6, upper = 1 - 1e-6,
-    .var.name = "weight")
+  if (!is.numeric(weight) || length(weight) != 1L || is.na(weight))
+    stop("`weight` must be a single numeric value.", call. = FALSE)
+  if (weight <= 0)
+    stop("`weight` must be strictly above its lower bound (0 < weight < 1).", call. = FALSE)
+  if (weight >= 1)
+    stop("`weight` must be strictly below its upper bound (0 < weight < 1).", call. = FALSE)
 
   vague_prior <- .fill_vague_defaults(vague_prior, map_obj$outcome_type)
 

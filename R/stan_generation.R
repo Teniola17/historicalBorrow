@@ -55,35 +55,35 @@
   glue::glue(
 '// MAP hierarchical model — {outcome_type} outcome
 // Non-centered parameterisation to avoid Neal\'s funnel
-data \\{
+data {{
 {data_block}
-\\}
+}}
 
-parameters \\{
+parameters {{
   real mu;
   real<lower=0> tau;
   vector[J] eta;
-\\}
+}}
 
-transformed parameters \\{
+transformed parameters {{
   vector[J] theta;
   theta = mu + tau * eta;
-\\}
+}}
 
-model \\{
+model {{
   mu  ~ normal({mu_mean}, {mu_sd});
   tau ~ normal(0, {tau_scale});
   eta ~ std_normal();
 {likelihood}
-\\}
+}}
 
-generated quantities \\{
+generated quantities {{
   real mu_pred;
   mu_pred = normal_rng(mu, tau);
   {pred_param}
   vector[J] log_lik;
 {log_lik_block}
-\\}
+}}
 '
   )
 }
@@ -132,7 +132,7 @@ generated quantities \\{
 '// Borrowing model — {outcome_type} outcome
 // MAP/RMAP prior encoded as mixture of normals (K components passed as data)
 // Numerical stability via log_sum_exp
-data \\{
+data {{
   // MAP/RMAP mixture prior
   int<lower=1> K;
   simplex[K] mix_weights;
@@ -140,30 +140,30 @@ data \\{
   vector<lower=0>[K] mix_sds;
   // Current trial data
 {data_block}
-\\}
+}}
 
-parameters \\{
+parameters {{
   real {param_name};
-\\}
+}}
 
-model \\{
+model {{
   // Mixture prior
-  if (K == 1) \\{
+  if (K == 1) {{
     {param_name} ~ normal(mix_means[1], mix_sds[1]);
-  \\} else \\{
+  }} else {{
     vector[K] lp;
     for (k in 1:K)
       lp[k] = log(mix_weights[k]) +
                normal_lpdf({param_name} | mix_means[k], mix_sds[k]);
     target += log_sum_exp(lp);
-  \\}
+  }}
   // Likelihood
 {likelihood}
-\\}
+}}
 
-generated quantities \\{
+generated quantities {{
 {gq_block}
-\\}
+}}
 '
   )
 }
@@ -253,16 +253,16 @@ generated quantities \\{
   glue::glue(
 '// Power prior model — {outcome_type} outcome
 // Historical likelihood raised to power a0 (0 <= a0 <= 1)
-data \\{
+data {{
 {data_block}
-\\}
+}}
 
-parameters \\{
+parameters {{
   real {param_name};
   {a0_param_block}
-\\}
+}}
 
-model \\{
+model {{
   // Weakly informative prior on treatment parameter
   {param_name} ~ normal({mu_mean}, {mu_sd});
 {a0_prior}
@@ -270,11 +270,11 @@ model \\{
   target += {a0_value} * ({hist_ll});
   // Current data likelihood
 {curr_ll}
-\\}
+}}
 
-generated quantities \\{
+generated quantities {{
 {gq_block}
-\\}
+}}
 '
   )
 }
@@ -367,17 +367,17 @@ generated quantities \\{
   glue::glue(
 '// Commensurate prior model — {outcome_type} outcome
 // tau_comm controls borrowing: small tau_comm => strong borrowing
-data \\{
+data {{
 {data_block}
-\\}
+}}
 
-parameters \\{
+parameters {{
   real {param_hist};
   real {param_curr};
   real<lower=0> tau_comm;
-\\}
+}}
 
-model \\{
+model {{
   // Prior on historical parameter
   {param_hist} ~ normal({mu_hist}, {sig_hist});
   // Commensurate prior: Cauchy hyperprior on tau_comm
@@ -386,13 +386,13 @@ model \\{
   {param_curr} ~ normal({param_hist}, tau_comm);
   // Likelihood
 {curr_ll}
-\\}
+}}
 
-generated quantities \\{
+generated quantities {{
 {gq_block}
   real log_lik_tau_comm;
   log_lik_tau_comm = cauchy_lpdf(tau_comm | 0, 1);
-\\}
+}}
 '
   )
 }

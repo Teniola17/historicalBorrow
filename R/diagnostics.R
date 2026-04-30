@@ -182,7 +182,7 @@ diagnostics <- function(fit,
 
   param_name <- .primary_params(fit$outcome_type, fit$model)[1]
   post_mean  <- tryCatch(
-    mean(as.numeric(posterior::subset_draws(fit$draws, variable = param_name))),
+    mean(posterior::extract_variable(fit$draws, variable = param_name)),
     error = function(e) NA_real_
   )
 
@@ -217,9 +217,9 @@ diagnostics <- function(fit,
 
   # Build long-format data frame for ggplot
   plot_data <- do.call(rbind, lapply(params, function(p) {
-    vals <- as.numeric(posterior::subset_draws(draws, variable = p))
-    chains     <- as.integer(posterior::subset_draws(draws, variable = ".chain"))
-    iterations <- as.integer(posterior::subset_draws(draws, variable = ".iteration"))
+    vals       <- posterior::extract_variable(draws, variable = p)
+    chains     <- draws$.chain
+    iterations <- draws$.iteration
     data.frame(
       parameter = p,
       chain     = factor(chains),

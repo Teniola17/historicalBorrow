@@ -90,7 +90,7 @@ fit_tdp <- function(data,
   )
 
   draws <- posterior::as_draws_df(fit$draws())
-  theta_star_draws <- as.numeric(posterior::subset_draws(draws, variable = "theta_star"))
+  theta_star_draws <- posterior::extract_variable(draws, variable = "theta_star")
 
   # ── Fit mixture of normals ────────────────────────────────────────────────
   mix <- .fit_mixture_of_normals(theta_star_draws, K_max = 6L)
