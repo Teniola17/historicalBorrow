@@ -1,11 +1,11 @@
 # S3 methods for historicalBorrow objects
 # print / summary / plot dispatchers
 
-# ── map_prior ─────────────────────────────────────────────────────────────────
+# -- map_prior -----------------------------------------------------------------
 
 #' @export
 print.map_prior <- function(x, ...) {
-  cat("── historicalBorrow: MAP Prior ──────────────────────────────────────────\n")
+  cat("-- historicalBorrow: MAP Prior ------------------------------------------\n")
   cat(glue::glue("  Outcome type : {x$outcome_type}\n"))
   cat(glue::glue("  Model        : {x$model_type}\n"))
   cat(glue::glue("  Studies used : {x$data$n_hist}\n"))
@@ -64,7 +64,7 @@ plot.map_prior <- function(x, ...) {
       title    = "MAP Prior",
       subtitle = glue::glue(
         "Outcome: {x$outcome_type} | ",
-        "K = {mix$K} | ESS ≈ {x$ess_prior}"
+        "K = {mix$K} | ESS ~ {x$ess_prior}"
       ),
       x = glue::glue("mu_pred ({x$outcome_type} link scale)"),
       y = "Density"
@@ -74,11 +74,11 @@ plot.map_prior <- function(x, ...) {
   p
 }
 
-# ── rmap_prior ────────────────────────────────────────────────────────────────
+# -- rmap_prior ----------------------------------------------------------------
 
 #' @export
 print.rmap_prior <- function(x, ...) {
-  cat("── historicalBorrow: Robust MAP Prior ───────────────────────────────────\n")
+  cat("-- historicalBorrow: Robust MAP Prior -----------------------------------\n")
   cat(glue::glue("  Outcome type  : {x$outcome_type}\n"))
   cat(glue::glue("  MAP weight    : {x$rmap_weight}\n"))
   cat(glue::glue("  Vague weight  : {round(1 - x$rmap_weight, 4)}\n"))
@@ -159,7 +159,7 @@ plot.rmap_prior <- function(x, ...) {
     ggplot2::labs(
       title    = "Robust MAP Prior",
       subtitle = glue::glue(
-        "MAP weight = {x$rmap_weight} | RMAP ESS ≈ {x$ess_prior_rmap}"
+        "MAP weight = {x$rmap_weight} | RMAP ESS ~ {x$ess_prior_rmap}"
       ),
       x        = glue::glue("Parameter ({x$outcome_type} link scale)"),
       y        = "Density",
@@ -170,11 +170,11 @@ plot.rmap_prior <- function(x, ...) {
     ggplot2::theme(legend.position = "top")
 }
 
-# ── tdp_prior ─────────────────────────────────────────────────────────────────
+# -- tdp_prior -----------------------------------------------------------------
 
 #' @export
 print.tdp_prior <- function(x, ...) {
-  cat("── historicalBorrow: Time-Dependent Prior ────────────────────────────────\n")
+  cat("-- historicalBorrow: Time-Dependent Prior --------------------------------\n")
   cat(glue::glue("  Outcome type    : {x$outcome_type}\n"))
   cat(glue::glue("  Studies used    : {x$data$n_hist}\n"))
   cat(glue::glue("  Prediction time : {x$current_time}\n"))
@@ -219,7 +219,7 @@ plot.tdp_prior <- function(x, ...) {
       title    = "Time-Dependent Prior",
       subtitle = glue::glue(
         "Outcome: {x$outcome_type} | K = {mix$K} | ",
-        "T_current = {x$current_time} | ESS ≈ {x$ess_prior}"
+        "T_current = {x$current_time} | ESS ~ {x$ess_prior}"
       ),
       x = glue::glue("theta_star ({x$outcome_type} link scale)"),
       y = "Density"
@@ -227,11 +227,11 @@ plot.tdp_prior <- function(x, ...) {
     ggplot2::theme_bw()
 }
 
-# ── rtdp_prior ────────────────────────────────────────────────────────────────
+# -- rtdp_prior ----------------------------------------------------------------
 
 #' @export
 print.rtdp_prior <- function(x, ...) {
-  cat("── historicalBorrow: Robust Time-Dependent Prior ─────────────────────────\n")
+  cat("-- historicalBorrow: Robust Time-Dependent Prior -------------------------\n")
   cat(glue::glue("  Outcome type    : {x$outcome_type}\n"))
   cat(glue::glue("  Prediction time : {x$current_time}\n"))
   cat(glue::glue("  TDP weight      : {x$rtdp_weight}\n"))
@@ -305,7 +305,7 @@ plot.rtdp_prior <- function(x, ...) {
     ggplot2::labs(
       title    = "Robust Time-Dependent Prior",
       subtitle = glue::glue(
-        "TDP weight = {x$rtdp_weight} | RTDP ESS ≈ {x$ess_prior_rtdp} | ",
+        "TDP weight = {x$rtdp_weight} | RTDP ESS ~ {x$ess_prior_rtdp} | ",
         "T_current = {x$current_time}"
       ),
       x        = glue::glue("Parameter ({x$outcome_type} link scale)"),
@@ -317,11 +317,11 @@ plot.rtdp_prior <- function(x, ...) {
     ggplot2::theme(legend.position = "top")
 }
 
-# ── borrowing_fit ─────────────────────────────────────────────────────────────
+# -- borrowing_fit -------------------------------------------------------------
 
 #' @export
 print.borrowing_fit <- function(x, ...) {
-  cat("── historicalBorrow: Borrowing Model Fit ────────────────────────────────\n")
+  cat("-- historicalBorrow: Borrowing Model Fit --------------------------------\n")
   cat(glue::glue("  Outcome : {x$outcome_type}\n"))
   cat(glue::glue("  Model   : {toupper(x$model)}\n\n"))
 

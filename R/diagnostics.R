@@ -46,7 +46,7 @@ diagnostics <- function(fit,
 
   draws <- fit$draws
 
-  # ── R-hat & ESS ─────────────────────────────────────────────────────────────
+  # -- R-hat & ESS -------------------------------------------------------------
   summ <- posterior::summarise_draws(
     draws,
     posterior::default_convergence_measures()
@@ -55,7 +55,7 @@ diagnostics <- function(fit,
   ess_bulk_df <- summ[, c("variable", "ess_bulk")]
   ess_tail_df <- summ[, c("variable", "ess_tail")]
 
-  # ── HMC diagnostics ──────────────────────────────────────────────────────────
+  # -- HMC diagnostics ----------------------------------------------------------
   div_count        <- 0L
   treedepth_count  <- 0L
   if (!is.null(fit$fit)) {
@@ -66,20 +66,20 @@ diagnostics <- function(fit,
     }, error = function(e) NULL)
   }
 
-  # ── Prior-data conflict ──────────────────────────────────────────────────────
+  # -- Prior-data conflict ------------------------------------------------------
   pdc <- .compute_prior_data_conflict(fit, pdc_threshold)
 
-  # ── ESS of borrowing ─────────────────────────────────────────────────────────
+  # -- ESS of borrowing ---------------------------------------------------------
   ess_borrow <- .compute_ess_borrowing(fit)
 
-  # ── Shrinkage ────────────────────────────────────────────────────────────────
+  # -- Shrinkage ----------------------------------------------------------------
   shrink <- .compute_shrinkage(fit)
 
-  # ── Trace plots ──────────────────────────────────────────────────────────────
+  # -- Trace plots --------------------------------------------------------------
   params_to_plot <- parameters %||% .primary_params(fit$outcome_type, fit$model)
   tp <- .make_trace_plots(draws, params_to_plot)
 
-  # ── Flags ────────────────────────────────────────────────────────────────────
+  # -- Flags --------------------------------------------------------------------
   flags <- character(0)
   bad_rhat <- rhat_df$variable[!is.na(rhat_df$rhat) & rhat_df$rhat > threshold_rhat]
   if (length(bad_rhat) > 0)
@@ -113,7 +113,7 @@ diagnostics <- function(fit,
   result
 }
 
-# ── Internal: prior-data conflict ─────────────────────────────────────────────
+# -- Internal: prior-data conflict ---------------------------------------------
 
 #' @noRd
 .compute_prior_data_conflict <- function(fit, threshold = 2.0) {
@@ -153,7 +153,7 @@ diagnostics <- function(fit,
   )
 }
 
-# ── Internal: ESS of borrowing ────────────────────────────────────────────────
+# -- Internal: ESS of borrowing ------------------------------------------------
 
 #' @noRd
 .compute_ess_borrowing <- function(fit) {
@@ -161,7 +161,7 @@ diagnostics <- function(fit,
   fit$prior$ess_prior_rmap %||% fit$prior$ess_prior %||% NA_real_
 }
 
-# ── Internal: shrinkage ───────────────────────────────────────────────────────
+# -- Internal: shrinkage -------------------------------------------------------
 
 #' @noRd
 .compute_shrinkage <- function(fit) {
@@ -192,7 +192,7 @@ diagnostics <- function(fit,
   (post_mean - mle_val) / (prior_mean - mle_val)
 }
 
-# ── Internal: primary parameters ─────────────────────────────────────────────
+# -- Internal: primary parameters ---------------------------------------------
 
 #' @noRd
 .primary_params <- function(outcome_type, model) {
@@ -206,7 +206,7 @@ diagnostics <- function(fit,
   base
 }
 
-# ── Internal: trace plots ─────────────────────────────────────────────────────
+# -- Internal: trace plots -----------------------------------------------------
 
 #' @noRd
 .make_trace_plots <- function(draws, params) {
@@ -244,11 +244,11 @@ diagnostics <- function(fit,
     ggplot2::theme(strip.text = ggplot2::element_text(face = "bold"))
 }
 
-# ── S3 print ──────────────────────────────────────────────────────────────────
+# -- S3 print ------------------------------------------------------------------
 
 #' @export
 print.hb_diagnostics <- function(x, ...) {
-  cat("── historicalBorrow: MCMC Diagnostics ───────────────────────────────────\n")
+  cat("-- historicalBorrow: MCMC Diagnostics -----------------------------------\n")
   cat(glue::glue("  Divergences       : {x$divergences}\n"))
   cat(glue::glue("  Max-treedepth hits: {x$max_treedepth_hits}\n"))
 

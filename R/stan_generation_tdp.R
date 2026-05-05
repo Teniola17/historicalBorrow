@@ -29,7 +29,7 @@
   param_decl  <- .tdp_param_declarations(outcome_type)
 
   glue::glue(
-'// Time-Dependent Prior (TDP) — {outcome_type} outcome
+'// Time-Dependent Prior (TDP) - {outcome_type} outcome
 // Ornstein-Uhlenbeck continuous-time process with temporal decay
 
 data {{

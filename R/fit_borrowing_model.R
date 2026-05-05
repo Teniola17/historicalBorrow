@@ -14,8 +14,8 @@
 #'     \item{`"rmap"`}{Uses the robust MAP mixture from `prior$mixture_rmap`.}
 #'     \item{`"tdp"`}{Uses the TDP mixture prior from `prior$mixture`.}
 #'     \item{`"rtdp"`}{Uses the robust TDP mixture from `prior$mixture_rtdp`.}
-#'     \item{`"power"`}{Power prior — scales historical log-likelihood by `a0`.}
-#'     \item{`"commensurate"`}{Commensurate prior — `tau_comm` controls borrowing.}
+#'     \item{`"power"`}{Power prior - scales historical log-likelihood by `a0`.}
+#'     \item{`"commensurate"`}{Commensurate prior - `tau_comm` controls borrowing.}
 #'   }
 #' @param hyperpriors Named list of model hyperpriors. Relevant keys:
 #'   * MAP/RMAP: none (mixture passed as Stan data).
@@ -80,10 +80,10 @@ fit_borrowing_model <- function(current_data,
     commensurate = "borrowing_commensurate"
   )
 
-  # ── Build Stan data ──────────────────────────────────────────────────────────
+  # -- Build Stan data ----------------------------------------------------------
   stan_d <- .build_stan_data(current_data, prior, model, hyperpriors)
 
-  # ── Generate & compile Stan code ────────────────────────────────────────────
+  # -- Generate & compile Stan code --------------------------------------------
   hp_for_gen <- .build_hp_for_gen(current_data, prior, model, hyperpriors)
   code <- .generate_stan_code(
     outcome_type    = current_data$outcome,
@@ -96,7 +96,7 @@ fit_borrowing_model <- function(current_data,
     model_name = paste0(model, "_", current_data$outcome)
   )
 
-  # ── Sample ──────────────────────────────────────────────────────────────────
+  # -- Sample ------------------------------------------------------------------
   fit <- compiled$sample(
     data            = stan_d,
     chains          = chains,
@@ -125,7 +125,7 @@ fit_borrowing_model <- function(current_data,
   )
 }
 
-# ── Stan data builders ────────────────────────────────────────────────────────
+# -- Stan data builders --------------------------------------------------------
 
 .build_stan_data <- function(current_data, prior, model, hyperpriors) {
   curr <- current_data$stan_data_current

@@ -57,7 +57,7 @@ plot_prior_posterior <- function(fit,
   if (is.null(post_vals))
     stop("Could not extract posterior draws.", call. = FALSE)
 
-  # ── Prior density on appropriate scale ──────────────────────────────────────
+  # -- Prior density on appropriate scale --------------------------------------
   x_range <- range(post_vals, na.rm = TRUE)
   padding  <- diff(x_range) * 0.4
   x_grid   <- seq(x_range[1] - padding, x_range[2] + padding, length.out = n_grid)
@@ -81,13 +81,13 @@ plot_prior_posterior <- function(fit,
     }
   }
 
-  # ── Posterior kernel density ─────────────────────────────────────────────────
+  # -- Posterior kernel density -------------------------------------------------
   post_dens  <- density(post_vals, from = x_grid[1], to = x_grid[n_grid], n = n_grid)
   post_df    <- data.frame(x = post_dens$x, density = post_dens$y, source = "Posterior")
 
   plot_data  <- if (!is.null(prior_df)) rbind(prior_df, post_df) else post_df
 
-  # ── Labels ───────────────────────────────────────────────────────────────────
+  # -- Labels -------------------------------------------------------------------
   x_label <- switch(outcome,
     binary     = if (transform == "natural") "Response probability" else "logit(p)",
     continuous = "Mean",
@@ -127,7 +127,7 @@ plot_prior_posterior <- function(fit,
   p
 }
 
-#' Plot borrowing effect — credible interval comparison
+#' Plot borrowing effect - credible interval comparison
 #'
 #' Shows side-by-side 95% credible intervals for the primary parameter under
 #' the fitted borrowing model versus a reference no-borrowing analysis.

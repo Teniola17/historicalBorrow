@@ -39,7 +39,7 @@
 #'
 #' @return An S3 object of class `map_prior` with components:
 #'   \describe{
-#'     \item{`mixture`}{`list(weights, means, sds, K)` — mixture of normals approximation.}
+#'     \item{`mixture`}{`list(weights, means, sds, K)` - mixture of normals approximation.}
 #'     \item{`mu_pred_draws`}{Full numeric vector of `mu_pred` posterior draws.}
 #'     \item{`outcome_type`}{Outcome type string.}
 #'     \item{`model_type`}{`"standard"`.}
@@ -132,7 +132,7 @@ fit_map <- function(data,
   )
 }
 
-# ── Hyperprior defaults ────────────────────────────────────────────────────────
+# -- Hyperprior defaults --------------------------------------------------------
 
 .fill_map_hyperpriors <- function(hp, outcome_type) {
   defaults <- switch(outcome_type,

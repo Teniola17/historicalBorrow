@@ -86,7 +86,7 @@ robustify_map <- function(map_obj,
   obj
 }
 
-# ── Vague prior defaults ───────────────────────────────────────────────────────
+# -- Vague prior defaults -------------------------------------------------------
 
 .fill_vague_defaults <- function(vp, outcome_type) {
   default_sd <- switch(outcome_type,

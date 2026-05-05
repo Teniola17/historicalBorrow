@@ -33,14 +33,14 @@
   )
 }
 
-# ── Defaults ──────────────────────────────────────────────────────────────────
+# -- Defaults ------------------------------------------------------------------
 
 .default <- function(prior_spec, key, default) {
   val <- prior_spec[[key]]
   if (is.null(val)) default else val
 }
 
-# ── MAP hierarchical model ─────────────────────────────────────────────────────
+# -- MAP hierarchical model -----------------------------------------------------
 
 .stan_map <- function(outcome_type, prior_spec) {
   mu_mean   <- .default(prior_spec, "mu_mean",   0)
@@ -53,7 +53,7 @@
   pred_param    <- .map_pred_param(outcome_type)
 
   glue::glue(
-'// MAP hierarchical model — {outcome_type} outcome
+'// MAP hierarchical model - {outcome_type} outcome
 // Non-centered parameterisation to avoid Neal\'s funnel
 data {{
 {data_block}
@@ -120,7 +120,7 @@ generated quantities {{
   )
 }
 
-# ── Borrowing model with mixture prior ────────────────────────────────────────
+# -- Borrowing model with mixture prior ----------------------------------------
 
 .stan_borrowing_mixture <- function(outcome_type, prior_spec) {
   data_block <- .borrow_data_block(outcome_type)
@@ -129,7 +129,7 @@ generated quantities {{
   param_name <- .borrow_param_name(outcome_type)
 
   glue::glue(
-'// Borrowing model — {outcome_type} outcome
+'// Borrowing model - {outcome_type} outcome
 // MAP/RMAP prior encoded as mixture of normals (K components passed as data)
 // Numerical stability via log_sum_exp
 data {{
@@ -219,7 +219,7 @@ generated quantities {{
   )
 }
 
-# ── Power prior model ─────────────────────────────────────────────────────────
+# -- Power prior model ---------------------------------------------------------
 
 .stan_power_prior <- function(outcome_type, prior_spec) {
   a0_fixed  <- .default(prior_spec, "a0_fixed",  -1)    # -1 = estimate a0
@@ -251,7 +251,7 @@ generated quantities {{
   a0_value <- if (random_a0) "a0" else as.character(a0_fixed)
 
   glue::glue(
-'// Power prior model — {outcome_type} outcome
+'// Power prior model - {outcome_type} outcome
 // Historical likelihood raised to power a0 (0 <= a0 <= 1)
 data {{
 {data_block}
@@ -349,7 +349,7 @@ generated quantities {{
   )
 }
 
-# ── Commensurate prior model ──────────────────────────────────────────────────
+# -- Commensurate prior model --------------------------------------------------
 
 .stan_commensurate <- function(outcome_type, prior_spec) {
   mu_hist  <- .default(prior_spec, "mu_hist",    0)
@@ -365,7 +365,7 @@ generated quantities {{
   param_curr <- .borrow_param_name(outcome_type)
 
   glue::glue(
-'// Commensurate prior model — {outcome_type} outcome
+'// Commensurate prior model - {outcome_type} outcome
 // tau_comm controls borrowing: small tau_comm => strong borrowing
 data {{
 {data_block}

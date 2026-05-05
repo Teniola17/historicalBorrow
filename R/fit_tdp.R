@@ -19,7 +19,10 @@
 #'     \item{`tau_mean`, `tau_sd`}{Mean and SD of temporal noise `tau`.}
 #'     \item{`rho_alpha`, `rho_beta`}{Beta hyperprior on correlation decay `rho`.}
 #'   }
-#' @param chains, iter_warmup, iter_sampling, seed MCMC control parameters.
+#' @param chains Integer; number of Markov chains.
+#' @param iter_warmup Integer; number of warm-up iterations per chain.
+#' @param iter_sampling Integer; number of sampling iterations per chain.
+#' @param seed Integer random seed for reproducibility.
 #' @param show_messages Logical; show Stan messages.
 #' @param ... Additional arguments to `cmdstanr`'s `$sample()`.
 #'
@@ -33,7 +36,7 @@
 #'     \item{`draws`}{Full posterior draws.}
 #'     \item{`stan_fit`}{CmdStanFit object.}
 #'     \item{`data`}{The bb_data input.}
-#'     \item{`mixture`}{`list(weights, means, sds, K)` — mixture approximation to theta_star.}
+#'     \item{`mixture`}{`list(weights, means, sds, K)` - mixture approximation to theta_star.}
 #'   }
 #'
 #' @seealso [robustify_tdp()], [fit_borrowing_model()]
@@ -55,7 +58,7 @@ fit_tdp <- function(data,
 
   .check_cmdstan()
 
-  # ── Extract times ──────────────────────────────────────────────────────────
+  # -- Extract times ----------------------------------------------------------
   times_hist <- .extract_times(data, hist_times)
   t_star     <- current_time %||% (max(times_hist) + 1)
 
@@ -63,19 +66,19 @@ fit_tdp <- function(data,
     warning("current_time is not after the latest historical study. ",
             "Prediction may be extrapolation in reverse.", call. = FALSE)
 
-  # ── Fill hyperpriors ──────────────────────────────────────────────────────
+  # -- Fill hyperpriors ------------------------------------------------------
   hp <- .fill_tdp_hyperpriors(hyperpriors, data$outcome)
 
-  # ── Generate Stan code ────────────────────────────────────────────────────
+  # -- Generate Stan code ----------------------------------------------------
   code <- .generate_stan_code_tdp(
     outcome_type = data$outcome,
     hyperpriors  = hp
   )
 
-  # ── Build Stan data ───────────────────────────────────────────────────────
+  # -- Build Stan data -------------------------------------------------------
   stan_d <- .build_stan_data_tdp(data, times_hist, t_star)
 
-  # ── Compile & sample ──────────────────────────────────────────────────────
+  # -- Compile & sample ------------------------------------------------------
   model <- .compile_stan(code, model_name = paste0("tdp_", data$outcome))
 
   fit <- model$sample(
@@ -92,7 +95,7 @@ fit_tdp <- function(data,
   draws <- posterior::as_draws_df(fit$draws())
   theta_star_draws <- posterior::extract_variable(draws, variable = "theta_star")
 
-  # ── Fit mixture of normals ────────────────────────────────────────────────
+  # -- Fit mixture of normals ------------------------------------------------
   mix <- .fit_mixture_of_normals(theta_star_draws, K_max = 6L)
   ess <- .compute_ess(mix, data$outcome)
 
@@ -112,7 +115,7 @@ fit_tdp <- function(data,
   )
 }
 
-# ── Helper: extract times ─────────────────────────────────────────────────────
+# -- Helper: extract times -----------------------------------------------------
 
 .extract_times <- function(data, hist_times) {
   if (!is.null(hist_times)) {
@@ -133,7 +136,7 @@ fit_tdp <- function(data,
   )
 }
 
-# ── Helper: fill TDP hyperpriors ──────────────────────────────────────────────
+# -- Helper: fill TDP hyperpriors ----------------------------------------------
 
 .fill_tdp_hyperpriors <- function(hp, outcome_type) {
   defaults <- switch(outcome_type,
@@ -177,7 +180,7 @@ fit_tdp <- function(data,
   modifyList(defaults, hp)
 }
 
-# ── Helper: build Stan data for TDP ───────────────────────────────────────────
+# -- Helper: build Stan data for TDP -------------------------------------------
 
 .build_stan_data_tdp <- function(data, times_hist, t_star) {
   c(

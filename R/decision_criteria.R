@@ -56,7 +56,7 @@ decision_criteria <- function(fit,
   checkmate::assert_number(probability_threshold, lower = 0, upper = 1)
   direction <- match.arg(direction)
 
-  # ── Resolve parameter name ────────────────────────────────────────────────
+  # -- Resolve parameter name ------------------------------------------------
   param_name <- parameter %||% switch(fit$outcome_type,
     binary     = "p_curr",
     continuous = "theta_curr",
@@ -75,7 +75,7 @@ decision_criteria <- function(fit,
 
   n_draws <- length(draws_vec)
 
-  # ── Posterior probability ─────────────────────────────────────────────────
+  # -- Posterior probability -------------------------------------------------
   post_prob <- if (direction == "greater") {
     mean(draws_vec > theta_threshold, na.rm = TRUE)
   } else {
@@ -84,7 +84,7 @@ decision_criteria <- function(fit,
 
   go <- post_prob >= probability_threshold
 
-  # ── Summary stats ─────────────────────────────────────────────────────────
+  # -- Summary stats ---------------------------------------------------------
   post_mean <- mean(draws_vec, na.rm = TRUE)
   post_ci   <- quantile(draws_vec, c(0.025, 0.975), na.rm = TRUE)
   names(post_ci) <- c("lo", "hi")
@@ -105,12 +105,12 @@ decision_criteria <- function(fit,
   )
 }
 
-# ── S3 print ──────────────────────────────────────────────────────────────────
+# -- S3 print ------------------------------------------------------------------
 
 #' @export
 print.decision_result <- function(x, ...) {
-  verdict <- if (x$go) "GO  ✓" else "NO-GO  ✗"
-  cat("── historicalBorrow: Decision Criteria ──────────────────────────────────\n")
+  verdict <- if (x$go) "GO  OK" else "NO-GO  x"
+  cat("-- historicalBorrow: Decision Criteria ----------------------------------\n")
   cat(glue::glue("  Verdict            : {verdict}\n"))
   cat(glue::glue("  Parameter          : {x$parameter}\n"))
   dir_sym  <- if (x$direction == "greater") ">" else "<"

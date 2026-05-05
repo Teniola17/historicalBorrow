@@ -1,7 +1,9 @@
-#' @importFrom rlang %||%
+#' @importFrom rlang %||% .data
+#' @importFrom stats dnorm density quantile rnorm sd
+#' @importFrom utils modifyList
 NULL
 
-# ── Logit helpers ──────────────────────────────────────────────────────────────
+# -- Logit helpers --------------------------------------------------------------
 
 .logit <- function(p) {
   p <- pmax(pmin(p, 1 - .Machine$double.eps), .Machine$double.eps)
@@ -10,7 +12,7 @@ NULL
 
 .inv_logit <- function(x) 1 / (1 + exp(-x))
 
-# ── Mixture of normals ─────────────────────────────────────────────────────────
+# -- Mixture of normals ---------------------------------------------------------
 
 #' Fit a mixture of normal distributions to a vector of draws
 #'
@@ -42,7 +44,7 @@ NULL
     )
     if (is.null(fit)) next
     if (fit$bic < best_bic || is.null(best_fit)) {
-      # mclust uses -2*logLik + k*log(n), lower is better — but mclust
+      # mclust uses -2*logLik + k*log(n), lower is better - but mclust
       # reports BIC as 2*logLik - k*log(n) (higher = better).  We maximise.
       # Re-use the maximisation direction mclust uses:
       if (is.null(best_fit) || fit$bic > best_bic) {
@@ -97,7 +99,7 @@ NULL
   rnorm(n, mean = mix$means[comp], sd = mix$sds[comp])
 }
 
-# ── Stan compilation and caching ──────────────────────────────────────────────
+# -- Stan compilation and caching ----------------------------------------------
 
 #' Check that CmdStan is available
 #' @noRd
@@ -147,7 +149,7 @@ NULL
   cmdstanr::cmdstan_model(stan_file, compile = TRUE)
 }
 
-# ── ESS helpers ───────────────────────────────────────────────────────────────
+# -- ESS helpers ---------------------------------------------------------------
 
 #' Morita ESS for a binary MAP prior (approximation)
 #'

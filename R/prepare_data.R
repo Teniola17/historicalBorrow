@@ -58,7 +58,7 @@ prepare_data <- function(hist_data,
   )
 }
 
-# ── Internal: rename study column ─────────────────────────────────────────────
+# -- Internal: rename study column ---------------------------------------------
 
 .rename_study_col <- function(df, study_col) {
   if (study_col != "study") {
@@ -70,7 +70,7 @@ prepare_data <- function(hist_data,
   df
 }
 
-# ── Internal: binary ──────────────────────────────────────────────────────────
+# -- Internal: binary ----------------------------------------------------------
 
 .prepare_binary <- function(hist, curr) {
   req <- c("study", "n", "r")
@@ -103,7 +103,7 @@ prepare_data <- function(hist_data,
   .make_bb_data("binary", hist, curr, nrow(hist), stan_map, stan_curr)
 }
 
-# ── Internal: continuous ──────────────────────────────────────────────────────
+# -- Internal: continuous ------------------------------------------------------
 
 .prepare_continuous <- function(hist, curr) {
   req <- c("study", "n", "mean", "sd")
@@ -141,7 +141,7 @@ prepare_data <- function(hist_data,
   .make_bb_data("continuous", hist, curr, nrow(hist), stan_map, stan_curr)
 }
 
-# ── Internal: count ────────────────────────────────────────────────────────────
+# -- Internal: count ------------------------------------------------------------
 
 .prepare_count <- function(hist, curr) {
   req <- c("study", "n", "events")
@@ -174,7 +174,7 @@ prepare_data <- function(hist_data,
   .make_bb_data("count", hist, curr, nrow(hist), stan_map, stan_curr)
 }
 
-# ── Internal: helpers ─────────────────────────────────────────────────────────
+# -- Internal: helpers ---------------------------------------------------------
 
 .check_cols <- function(df, required, df_name) {
   missing <- setdiff(required, names(df))
@@ -202,11 +202,11 @@ prepare_data <- function(hist_data,
   )
 }
 
-# ── S3 methods ────────────────────────────────────────────────────────────────
+# -- S3 methods ----------------------------------------------------------------
 
 #' @export
 print.bb_data <- function(x, ...) {
-  cat("── historicalBorrow: Prepared Data ──────────────────────────────────────\n")
+  cat("-- historicalBorrow: Prepared Data --------------------------------------\n")
   cat(glue::glue("  Outcome type : {x$outcome}\n"))
   cat(glue::glue("  Historical   : {x$n_hist} studies\n"))
 
@@ -229,7 +229,7 @@ print.bb_data <- function(x, ...) {
 
 #' @export
 summary.bb_data <- function(object, ...) {
-  cat("── historicalBorrow: Data Summary ───────────────────────────────────────\n")
+  cat("-- historicalBorrow: Data Summary ---------------------------------------\n")
   cat(glue::glue("Outcome: {object$outcome}\n\n"))
   cat("Historical studies:\n")
   print(object$hist_data)
