@@ -8,6 +8,7 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
+library(historicalBorrow)
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment  = "#>",
@@ -39,6 +40,7 @@ with automatic down-weighting of older studies via a correlation decay parameter
 
 ```{r tdp-prep}
 # Add a 'time' column to historical data (study year, trial date, etc.)
+data("example_trial_data", package = "historicalBorrow")
 hist_with_times <- example_trial_data$binary$hist
 hist_with_times$time <- c(2010, 2012, 2014, 2015, 2016, 2017)
 

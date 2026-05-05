@@ -192,7 +192,7 @@ diagnostics(bf_n)
 The power prior scales the historical log-likelihood by a factor `a0 ∈ [0, 1]`.
 Setting `a0_fixed = -1` estimates `a0` from the data (modified power prior).
 
-```{r power}
+```{r power, eval=FALSE}
 bf_power <- fit_borrowing_model(
   current_data = pd,
   prior        = NULL,

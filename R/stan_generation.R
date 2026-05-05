@@ -314,9 +314,9 @@ generated quantities {{
 
 .power_hist_log_lik <- function(outcome_type) {
   switch(outcome_type,
-    binary     = "sum(binomial_logit_lpmf(r_hist | n_hist, rep_vector(theta_curr, J_hist)))",
+    binary     = "binomial_logit_lpmf(r_hist | n_hist, theta_curr)",#"sum(binomial_logit_lpmf(r_hist | n_hist, rep_vector(theta_curr, J_hist)))",
     continuous = "normal_lpdf(y_hist | theta_curr, se_hist)",
-    count      = "sum(poisson_log_lpmf(events_hist | log_n_hist + log_lambda_curr))"
+    count      = "poisson_log_lpmf(events_hist | log_n_hist + log_lambda_curr)",#"sum(poisson_log_lpmf(events_hist | log_n_hist + log_lambda_curr))"
   )
 }
 
